@@ -92,67 +92,190 @@ hadoop fs -put user_sample.csv /data/video_analysis/raw/users/
 
 ### 2. 数据清洗
 ```sql
--- 02_data_cleaning.hql
-INSERT INTO TABLE cleaned_media
+USE video_analysis;
+
+-- 确保使用正确的列数和列名
+INSERT OVERWRITE TABLE cleaned_media
 SELECT 
-  CAST(REGEXP_REPLACE(duration, '[^0-9]', '') AS INT) AS duration_sec,
-  -- 其他字段处理...
+  phone_no,
+  CASE 
+    WHEN duration <= 0 THEN 0 
+    WHEN duration > 86400 THEN 86400
+    ELSE duration 
+  END AS duration_sec,
+  TRIM(LOWER(station_name)) AS station_name,
+  CAST(FROM_UNIXTIME(UNIX_TIMESTAMP(origin_time, 'yyyy-MM-dd HH:mm:ss')) AS TIMESTAMP) AS start_time,
+  channel_id,
+  bitrate,
+  network_type
 FROM raw_media
-WHERE duration RLIKE '^[0-9]+$'; -- 过滤无效数据
-```
+WHERE phone_no RLIKE '^1[3-9]\\d{9}$'  -- 修正正则表达式转义
+  AND phone_no IS NOT NULL
+  AND origin_time IS NOT NULL;
+
+-- 验证清洗后数据
+SELECT 'cleaned_media' AS table_name, COUNT(*) AS row_count FROM cleaned_media;
+
 
 ### 3. 维度建模
 ```sql
--- 03_dimension_loading.hql
--- 加载用户维度
+USE video_analysis;
+
+-- 删除旧表
+DROP TABLE IF EXISTS dim_user;
+
+-- 创建维度表
+CREATE TABLE dim_user (
+  user_key BIGINT,
+  phone_no STRING,
+  province STRING,
+  city STRING,
+  age INT,
+  gender STRING,
+  reg_date STRING,
+  vip_expire_date STRING
+) STORED AS ORC;
+
+-- 插入数据（关键修正）
 INSERT INTO TABLE dim_user
 SELECT 
+  ROW_NUMBER() OVER(ORDER BY phone_no) AS user_key,
   phone_no,
-  region,
-  device_type,
-  -- 其他字段...
-FROM raw_users;
+  CASE 
+    WHEN substr(phone_no, 1, 3) = '138' THEN '广东'
+    WHEN substr(phone_no, 1, 3) = '139' THEN '浙江'
+    ELSE '其他' 
+  END AS province,
+  CASE 
+    WHEN substr(phone_no, 1, 3) = '138' THEN '广州'
+    WHEN substr(phone_no, 1, 3) = '139' THEN '杭州'
+    ELSE '未知' 
+  END AS city,
+  FLOOR(RAND() * 30) + 18 AS age,
+  CASE WHEN RAND() > 0.5 THEN 'M' ELSE 'F' END AS gender,
+  -- 注册日期：当前日期减去随机天数
+  DATE_SUB(CURRENT_DATE(), CAST(FLOOR(RAND() * 365) AS INT)) AS reg_date,
+  -- VIP过期日期：注册日期 + 365天（使用DATE_ADD + 显式类型转换）
+  DATE_ADD(
+    DATE_SUB(CURRENT_DATE(), CAST(FLOOR(RAND() * 365) AS INT)), 
+    CAST(365 AS INT)
+  ) AS vip_expire_date
+FROM (
+  SELECT DISTINCT phone_no 
+  FROM cleaned_media
+  WHERE phone_no IS NOT NULL AND phone_no != ''
+) t;
+-- 创建时间维度表
+DROP TABLE IF EXISTS dim_time;
+CREATE TABLE dim_time (
+  time_key INT,
+  full_time TIMESTAMP,
+  hour_of_day INT
+) STORED AS ORC;
 
--- 加载时间维度
+-- 加载时间维度数据（生成2025年全年的时间数据）
 INSERT INTO TABLE dim_time
 SELECT 
-  unix_timestamp(full_time) AS time_key,
-  full_time,
-  HOUR(full_time) AS hour_of_day,
-  -- 其他时间属性...
-FROM time_data;
-```
+  ROW_NUMBER() OVER(ORDER BY t.full_time) AS time_key,
+  t.full_time,
+  HOUR(t.full_time) AS hour_of_day
+FROM (
+  SELECT 
+    from_unixtime(unix_timestamp('2025-01-01 00:00:00') + (t1.pos * 3600)) AS full_time
+  FROM (
+    SELECT posexplode(split(space(365*24-1), ' ')) AS (pos, val) -- 365天*24小时
+  ) t1
+) t;
+
 
 ### 4. 事实表加载
 ```sql
--- 04_fact_loading.hql
-INSERT INTO TABLE fact_watching PARTITION (dt='${CURRENT_DATE}')
+-- 04_fact_loading.hql (最终版)
+SET hive.auto.convert.join=true;
+SET hive.exec.dynamic.partition.mode=nonstrict;
+USE video_analysis;
+
+-- 加载事实表
+INSERT OVERWRITE TABLE fact_watching
 SELECT 
   u.user_key,
   t.time_key,
-  cm.video_id,
-  cm.duration_sec
+  1 AS channel_key,
+  cm.duration_sec / 60.0 AS duration_min
 FROM cleaned_media cm
 JOIN dim_user u ON cm.phone_no = u.phone_no
-JOIN dim_time t ON cm.start_time = t.full_time
-WHERE u.user_key IS NOT NULL; -- 确保关联成功
+JOIN dim_time t 
+  -- 使用原始字符串比较
+  ON cm.start_time = t.full_time;
+
 ```
 
 ### 5. 分析阶段
 ```sql
--- 05_top_analysis.hql (RFM分析)
-INSERT OVERWRITE TABLE dim_user_segment
+-- 05_top_analysis.hql
+USE video_analysis;
+
+-- 获取当前日期
+SET hivevar:current_date = CURRENT_DATE();
+
+-- 用户行为分析
+INSERT OVERWRITE LOCAL DIRECTORY '/root/video-behavior-analysis/results/user_behavior_tmp'
+ROW FORMAT DELIMITED FIELDS TERMINATED BY ','
 SELECT 
-  user_key,
-  NTILE(5) OVER (ORDER BY last_active DESC) AS recency,
-  NTILE(5) OVER (ORDER BY session_count DESC) AS frequency,
-  NTILE(5) OVER (ORDER BY total_minutes DESC) AS monetary,
-  CASE 
-    WHEN (recency=5 AND monetary=5) THEN '冠军用户'
-    WHEN (recency>=4 AND frequency>=4) THEN '活跃用户'
-    -- 其他分群规则...
-  END AS segment_label
-FROM user_behavior_summary;
+  u.province,
+  u.city,
+  u.age,
+  u.gender,
+  SUM(f.duration_min) AS total_duration,
+  COUNT(1) AS watch_count
+FROM fact_watching f
+JOIN dim_user u ON f.user_key = u.user_key
+GROUP BY u.province, u.city, u.age, u.gender;
+
+-- 热门用户分析
+INSERT OVERWRITE LOCAL DIRECTORY '/root/video-behavior-analysis/results/top_users_tmp'
+ROW FORMAT DELIMITED FIELDS TERMINATED BY ','
+SELECT 
+  u.phone_no,
+  u.province,
+  u.city,
+  SUM(f.duration_min) AS total_duration
+FROM fact_watching f
+JOIN dim_user u ON f.user_key = u.user_key
+GROUP BY u.phone_no, u.province, u.city
+ORDER BY total_duration DESC
+LIMIT 10;
+-- 新增RFM用户分群计算
+DROP TABLE IF EXISTS user_rfm_analysis;
+CREATE TABLE user_rfm_analysis STORED AS ORC AS
+SELECT 
+  phone_no,
+  recency_days,
+  frequency,
+  monetary,
+  r_score,
+  f_score,
+  m_score,
+  CONCAT(r_score, f_score, m_score) AS rfm_cell
+FROM (
+  SELECT 
+    u.phone_no,
+    DATEDIFF(CURRENT_DATE, MAX(t.full_time)) AS recency_days,
+    COUNT(*) AS frequency,
+    SUM(f.duration_min) AS monetary,
+    NTILE(5) OVER(ORDER BY DATEDIFF(CURRENT_DATE, MAX(t.full_time)) DESC) AS r_score,
+    NTILE(5) OVER(ORDER BY COUNT(*) DESC) AS f_score,
+    NTILE(5) OVER(ORDER BY SUM(f.duration_min) DESC) AS m_score
+  FROM fact_watching f
+  JOIN dim_user u ON f.user_key = u.user_key
+  JOIN dim_time t ON f.time_key = t.time_key
+  GROUP BY u.phone_no
+) subquery;
+
+-- 导出结果到CSV
+INSERT OVERWRITE DIRECTORY '/results/user_rfm'
+ROW FORMAT DELIMITED FIELDS TERMINATED BY ','
+SELECT * FROM user_rfm_analysis;
 ```
 
 ## 分析结果示例
@@ -189,12 +312,16 @@ FROM user_behavior_summary;
 
 1. **用户分群报告**：基于RFM值的用户聚类分析
    ![用户分群](docs/user_segmentation.pdf)
+   <img width="2525" height="1638" alt="duration_distribution" src="https://github.com/user-attachments/assets/8364a3c5-b2ed-4364-9975-b50c9141be51" />
 
-2. **时段热力图**：24小时观看行为热度分布
+
+3. **时段热力图**：24小时观看行为热度分布
    ![时段热力图示例](docs/hourly_heatmap.png)
 
-3. **留存曲线**：用户生命周期留存趋势
+4. **留存曲线**：用户生命周期留存趋势
    ![留存曲线](docs/retention_curve.png)
+   <img width="2970" height="1767" alt="retention_trend" src="https://github.com/user-attachments/assets/24f01c75-3f0f-497f-be09-9efa5c43dfba" />
+
 
 ## Superset仪表板
 ```bash
