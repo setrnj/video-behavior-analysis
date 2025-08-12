@@ -1,0 +1,6 @@
+phone_no,duration,station_name,origin_time,channel_id,bitrate,network_type
+13800138000,125,琅琊榜_EP01,2023-05-01 20:30:15,channel1,high,4G
+13900139000,0,无效记录,2023-05-01 21:05:22,channel2,low,WiFi
+13600136000,3600,三体_EP03,2023-05-01 19:15:30,channel1,high,5G
+13700137000,1800,琅琊榜_EP02,2023-05-01 22:10:45,channel1,medium,4G
+13500135000,2400,三体_EP04,2023-05-01 18:20:00,channel3,high,WiFi
