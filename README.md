@@ -6,35 +6,72 @@
 ## 项目结构
 ```
 video-behavior-analysis/
-├── sql_scripts/                # Hive SQL脚本
-│   ├── 01_ddl_table_creation.hql # 表结构定义
-│   ├── 02_data_cleaning.hql    # 数据清洗脚本
+├── bin                          # 可执行脚本目录
+├── create_datasets.py           # 数据集生成脚本
+├── create_hive_connection.py    # Hive连接工具
+├── create_retention.sql         # 用户留存分析SQL模板
+├── data_samples/                # 样本数据集
+│   ├── media_sample.csv         # 媒体内容样本数据
+│   └── user_sample.csv          # 用户行为样本数据
+├── DEPLOYMENT.md                # 部署指南文档
+├── docs/                        # 分析文档和可视化输出
+│   ├── duration_distribution.png  # 观看时长分布图
+│   ├── er_diagram.png           # 数据库ER图
+│   ├── hourly_heatmap.png       # 时段热力图
+│   └── retention_trend.png      # 留存率趋势图
+├── etl.log                      # ETL日志文件
+├── generate_charts.py           # 图表生成脚本
+├── generate_er_diagram.py       # ER图生成工具
+├── generate_heatmap.py          # 热力图生成脚本 (原scripts/generate_heatmap.py)
+├── generate_retention.py        # 留存曲线生成脚本 (原scripts/generate_retention.py)
+├── generate_segmentation.py     # 用户分群脚本 (原scripts/generate_segmentation.py)
+├── get-pip.py                   # pip安装工具
+├── lzma_fix.py                  # LZMA压缩修复工具
+├── lzma_loader.py               # LZMA压缩加载器
+├── nohup.out                    # 后台进程输出
+├── Python-3.8.12.tgz            # Python源码包
+├── requirements.txt             # Python依赖清单
+├── results/                     # 分析结果输出
+│   ├── time_analysis.csv        # 时段分析结果
+│   ├── time_analysis_20250725.csv  # 特定日期时段分析
+│   ├── time_analysis_20250812.csv  # 特定日期时段分析
+│   ├── time_analysis_tmp/       # 时段分析临时目录
+│   ├── top_users.csv            # 高价值用户分析
+│   ├── top_users_20250725.csv   # 特定日期高价值用户
+│   ├── top_users_20250812.csv   # 特定日期高价值用户
+│   ├── top_users_tmp/           # 高价值用户临时目录
+│   ├── user_behavior.csv        # 用户行为分析结果
+│   ├── user_behavior_20250725.csv  # 特定日期用户行为
+│   ├── user_behavior_20250812.csv  # 特定日期用户行为
+│   └── user_behavior_tmp/       # 用户行为临时目录
+├── run_etl.sh                   # ETL执行脚本
+├── run_visualizations.sh        # 可视化执行脚本
+├── scripts/                     # Python可视化脚本 (原scripts目录内容)
+├── sql_scripts/                 # Hive SQL脚本
+│   ├── 01_ddl_table_creation.hql  # 表结构定义
+│   ├── 02_data_cleaning.hql     # 数据清洗脚本
 │   ├── 03_dimension_loading.hql # 维度加载脚本
-│   ├── 04_fact_loading.hql     # 事实表加载脚本
-│   ├── 05_top_analysis.hql     # RFM分析脚本
-│   ├── 06_user_behavior.hql    # 用户行为分析脚本
-│   └── 07_incremental_loading.hql # 增量加载脚本
-├── scripts/                    # Python可视化脚本
-│   ├── generate_segmentation.py # 用户分群脚本
-│   ├── generate_heatmap.py      # 热力图生成脚本
-│   └── generate_retention.py    # 留存曲线脚本
-├── data_samples/               # 样本数据
-│   ├── media_sample.csv
-│   └── user_sample.csv
-├── superset/                   # Superset仪表板配置
-│   └── user_behavior_dashboard.json
-├── results/                    # 分析结果文件
-│   ├── user_behavior.csv       # 用户行为分析结果
-│   ├── top_users.csv           # 高价值用户分析
-│   └── time_analysis.csv       # 时段分析结果
-├── docs/                       # 文档和可视化输出
-│   ├── user_segmentation.pdf
-│   ├── hourly_heatmap.png
-│   ├── retention_curve.png
-│   └── maintenance_guide.md
-├── run_etl.sh                  # ETL主执行脚本
-├── run_visualizations.sh       # 可视化执行脚本
-└── requirements.txt            # Python依赖
+│   ├── 04_fact_loading.hql      # 事实表加载脚本
+│   ├── 05_top_analysis.hql      # RFM分析脚本
+│   ├── 06_user_behavior.hql     # 用户行为分析脚本
+│   ├── 07_user_retention.hql    # 用户留存分析脚本 (原07_incremental_loading.hql)
+│   ├── tmp.hql                  # 临时SQL脚本
+│   └── validate.hql             # 数据验证脚本
+├── superset/                    # Superset配置 (空目录)
+├── superset-1.5-env/            # Superset 1.5虚拟环境
+│   ├── bin/                     # 可执行文件
+│   ├── include/                 # 头文件
+│   └── lib/                     # 依赖库
+├── superset_config.py           # Superset配置文件
+├── superset-env/                # Superset虚拟环境
+│   ├── bin/                     # 可执行文件
+│   ├── include/                 # 头文件
+│   └── lib/                     # 依赖库
+├── superset.log                 # Superset日志
+├── superset-secret.key          # Superset密钥
+├── temp_hive_output.txt         # Hive临时输出
+├── video-analysis-system.zip    # 系统压缩包
+└── y                            # 临时文件/未知文件
 ```
 
 ## 技术栈
