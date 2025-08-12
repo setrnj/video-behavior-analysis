@@ -115,8 +115,7 @@ WHERE phone_no RLIKE '^1[3-9]\\d{9}$'  -- 修正正则表达式转义
 
 -- 验证清洗后数据
 SELECT 'cleaned_media' AS table_name, COUNT(*) AS row_count FROM cleaned_media;
-
-
+```
 ### 3. 维度建模
 ```sql
 USE video_analysis;
@@ -186,8 +185,7 @@ FROM (
     SELECT posexplode(split(space(365*24-1), ' ')) AS (pos, val) -- 365天*24小时
   ) t1
 ) t;
-
-
+```
 ### 4. 事实表加载
 ```sql
 -- 04_fact_loading.hql (最终版)
