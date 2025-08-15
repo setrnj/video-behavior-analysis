@@ -1,70 +1,71 @@
+# -*- coding: utf-8 -*-
 import pandas as pd
 import matplotlib.pyplot as plt
-import matplotlib.ticker as mtick
-import numpy as np
+import os
+import matplotlib as mpl
 
-# 加载留存数据
-df = pd.read_csv('/results/retention_curve/000000_0', 
-                 names=['date', 'day0', 'day1', 'day3', 'day7', 'day14', 'day30'])
-
-# 计算留存率
-df['retention_day1'] = df['day1'] / df['day0']
-df['retention_day3'] = df['day3'] / df['day0']
-df['retention_day7'] = df['day7'] / df['day0']
-df['retention_day14'] = df['day14'] / df['day0']
-df['retention_day30'] = df['day30'] / df['day0']
-
-# 计算平均留存曲线
-avg_retention = df[[
-    'retention_day1', 'retention_day3', 
-    'retention_day7', 'retention_day14', 
-    'retention_day30'
-]].mean()
-
-# 创建曲线图
-plt.figure(figsize=(12, 7))
-days = [1, 3, 7, 14, 30]
-
-# 绘制各日期的留存曲线
-for _, row in df.iterrows():
-    plt.plot(days, [row[f'retention_day{d}'] for d in [1,3,7,14,30]], 
-             color='gray', alpha=0.3, linewidth=1)
-
-# 绘制平均留存曲线
-plt.plot(days, avg_retention.values, 
-         marker='o', linewidth=3, color='#3498db', 
-         label='平均留存率')
-
-# 标注关键点
-for i, day in enumerate(days):
-    plt.annotate(f'{avg_retention[i]*100:.1f}%', 
-                 (day, avg_retention[i]),
-                 textcoords="offset points", 
-                 xytext=(0,10), 
-                 ha='center',
-                 fontsize=10)
-
-# 美化图表
-plt.title('用户留存曲线 (30天观察期)', fontsize=16)
-plt.xlabel('注册后天数', fontsize=12)
-plt.ylabel('留存率', fontsize=12)
-plt.xticks(days)
-plt.ylim(0, 1)
-plt.gca().yaxis.set_major_formatter(mtick.PercentFormatter(1.0))
-plt.grid(True, linestyle='--', alpha=0.7)
-plt.legend()
-
-# 添加基准线比较
-industry_avg = [0.65, 0.45, 0.35, 0.25, 0.18]
-plt.plot(days, industry_avg, 'r--', marker='s', label='行业基准')
-
-# 添加注释框
-plt.annotate('关键留存节点:\nDay7留存率预测长期价值', 
-             xy=(7, avg_retention[2]), 
-             xytext=(10, 0.7), 
-             arrowprops=dict(facecolor='black', shrink=0.05),
-             fontsize=10)
-
-# 保存结果
-plt.tight_layout()
-plt.savefig('docs/retention_curve.png', dpi=300)
+def generate_hourly_heatmap():
+    # 设置中文字体
+    try:
+        # 尝试使用文泉驿微米黑字体
+        plt.rcParams['font.sans-serif'] = ['WenQuanYi Micro Hei']
+        plt.rcParams['axes.unicode_minus'] = False
+    except:
+        # 回退到默认字体
+        print("中文支持警告: 无法设置中文字体，图表中文可能显示异常")
+    
+    try:
+        # 从 HDFS 获取预处理数据
+        import subprocess
+        subprocess.run(["hdfs", "dfs", "-get", "/results/time_heatmap/000000_0", "time_heatmap.csv"])
+        df = pd.read_csv('time_heatmap.csv', 
+                         names=['hour_of_day', 'day_of_week', 'sessions', 'avg_duration'])
+        
+        # 重命名列
+        df = df.rename(columns={'sessions': 'active_users'})
+        print("成功从 HDFS 获取数据")
+    except Exception as e:
+        print(f"数据获取失败: {str(e)}")
+        print("使用示例数据生成热力图...")
+        # 创建示例数据
+        data = {
+            'hour_of_day': list(range(0, 24)) * 7,
+            'day_of_week': [d for d in range(1, 8) for _ in range(24)],
+            'active_users': [max(50, (h*10) % 200) for h in range(24*7)]
+        }
+        df = pd.DataFrame(data)
+    
+    # 确保目录存在
+    os.makedirs("docs", exist_ok=True)
+    
+    # 转换星期几为中文标签
+    weekdays = ['周一', '周二', '周三', '周四', '周五', '周六', '周日']
+    df['day_of_week'] = df['day_of_week'].apply(
+        lambda x: weekdays[int(x)-1] if 1 <= int(x) <= 7 else '未知'
+    )
+    
+    # 创建热力图矩阵
+    heatmap_data = df.pivot_table(index="hour_of_day", 
+                                 columns="day_of_week", 
+                                 values="active_users", 
+                                 fill_value=0)
+    
+    # 简化图表生成
+    plt.figure(figsize=(12, 8))
+    plt.imshow(heatmap_data, cmap="YlGnBu", aspect='auto')
+    plt.colorbar(label='活跃用户数')
+    
+    # 设置坐标轴
+    plt.yticks(range(len(heatmap_data.index)), heatmap_data.index)
+    plt.xticks(range(len(heatmap_data.columns)), heatmap_data.columns)
+    
+    plt.title("用户活跃时段热力图")
+    plt.xlabel("星期")
+    plt.ylabel("小时")
+    plt.tight_layout()
+    
+    plt.savefig("docs/hourly_heatmap_v2.png", dpi=150)
+    print("热力图已生成: docs/hourly_heatmap_v2.png")
+    
+if __name__ == "__main__":
+    generate_hourly_heatmap()

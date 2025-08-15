@@ -15,8 +15,8 @@ rfm_df['Cluster'] = kmeans.fit_predict(rfm_df[['Recency', 'Frequency', 'Monetary
 
 # Save the clustered data back to HDFS
 rfm_df.to_csv('clustered_rfm.csv', index=False)
-!hdfs dfs -put clustered_rfm.csv /results/user_rfm/
 
+subprocess.run(["hdfs", "dfs", "-put", "-f", "clustered_rfm.csv", "/results/user_rfm/"])
 # Visualize the clusters
 plt.figure(figsize=(10, 6))
 sns.scatterplot(x='Recency', y='Monetary', hue='Cluster', data=rfm_df, palette='viridis')

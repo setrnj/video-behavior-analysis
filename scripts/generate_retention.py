@@ -3,6 +3,11 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
 
+
+subprocess.run(["hdfs", "dfs", "-get", "/results/time_heatmap/000000_0", "time_heatmap.csv"])
+df = pd.read_csv('time_heatmap.csv', 
+                 names=['week_day', 'hour', 'sessions', 'avg_duration'])
+
 # 加载时段数据
 df = pd.read_csv('/results/time_heatmap/000000_0', 
                  names=['week_day', 'hour', 'sessions', 'avg_duration'])
