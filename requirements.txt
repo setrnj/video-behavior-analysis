@@ -10,4 +10,4 @@ faker>=8.0.0
 fpdf>=1.7.2
 jupyter
 sqlalchemy
-```` pandas>=1.1.5
+pandas>=1.1.5
