@@ -1,0 +1,12 @@
+*.csv
+*.log
+results/
+logs/
+data/
+outputs/
+__pycache__/
+*.pyc
+.DS_Store
+.env
+.venv/
+.*.sw[po]

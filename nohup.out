@@ -1,0 +1,81 @@
+log4j:WARN No appenders could be found for logger (org.apache.hadoop.util.VersionInfo).
+log4j:WARN Please initialize the log4j system properly.
+log4j:WARN See http://logging.apache.org/log4j/1.2/faq.html#noconfig for more info.
+2025-07-19 11:23:12,616 WARN  [main] util.NativeCodeLoader: Unable to load native-hadoop library for your platform... using builtin-java classes where applicable
+2025-07-19 11:23:13: Starting HiveServer2
+SLF4J: Class path contains multiple SLF4J bindings.
+SLF4J: Found binding in [jar:file:/opt/programs/apache-hive-3.1.2-bin/lib/log4j-slf4j-impl-2.10.0.jar!/org/slf4j/impl/StaticLoggerBinder.class]
+SLF4J: Found binding in [jar:file:/usr/local/hadoop/share/hadoop/common/lib/slf4j-log4j12-1.7.25.jar!/org/slf4j/impl/StaticLoggerBinder.class]
+SLF4J: See http://www.slf4j.org/codes.html#multiple_bindings for an explanation.
+SLF4J: Actual binding is of type [org.apache.logging.slf4j.Log4jLoggerFactory]
+Hive Session ID = de69933e-698f-48ae-8cfd-0ac43f2e6e54
+Hive Session ID = 6593c6d8-e3a5-4bd2-9a5c-74d6b3948d59
+Hive Session ID = d73750c3-5780-4485-8859-63c9b21c46e4
+Hive Session ID = 4615ba5f-6436-40c5-a14b-ad262ea3ae6b
+OK
+/root/video-behavior-analysis/superset-env/lib/python3.6/site-packages/sqlalchemy_utils/types/encrypted/encrypted_type.py:18: CryptographyDeprecationWarning: Python 3.6 is no longer supported by the Python core team. Therefore, support for it is deprecated in cryptography and will be removed in a future release.
+  import cryptography
+/root/video-behavior-analysis/superset-env/lib/python3.6/site-packages/pandas/compat/__init__.py:120: UserWarning: Could not import the lzma module. Your installed Python is incomplete. Attempting to use lzma compression will result in a RuntimeError.
+  warnings.warn(msg)
+logging was configured successfully
+INFO:superset.utils.logging_configurator:logging was configured successfully
+/root/video-behavior-analysis/superset-env/lib/python3.6/site-packages/flask_caching/__init__.py:202: UserWarning: Flask-Caching: CACHE_TYPE is set to null, caching is effectively disabled.
+  "Flask-Caching: CACHE_TYPE is set to null, "
+No PIL installation found
+INFO:superset.utils.screenshots:No PIL installation found
+ * Environment: production
+   WARNING: This is a development server. Do not use it in a production deployment.
+   Use a production WSGI server instead.
+ * Debug mode: off
+INFO:werkzeug: * Running on http://0.0.0.0:8000/ (Press CTRL+C to quit)
+/root/video-behavior-analysis/superset-env/lib/python3.6/site-packages/sqlalchemy_utils/types/encrypted/encrypted_type.py:18: CryptographyDeprecationWarning: Python 3.6 is no longer supported by the Python core team. Therefore, support for it is deprecated in cryptography and will be removed in a future release.
+  import cryptography
+/root/video-behavior-analysis/superset-env/lib/python3.6/site-packages/pandas/compat/__init__.py:120: UserWarning: Could not import the lzma module. Your installed Python is incomplete. Attempting to use lzma compression will result in a RuntimeError.
+  warnings.warn(msg)
+logging was configured successfully
+INFO:superset.utils.logging_configurator:logging was configured successfully
+/root/video-behavior-analysis/superset-env/lib/python3.6/site-packages/flask_caching/__init__.py:202: UserWarning: Flask-Caching: CACHE_TYPE is set to null, caching is effectively disabled.
+  "Flask-Caching: CACHE_TYPE is set to null, "
+No PIL installation found
+INFO:superset.utils.screenshots:No PIL installation found
+ * Serving Flask app "superset"
+ * Environment: production
+   WARNING: This is a development server. Do not use it in a production deployment.
+   Use a production WSGI server instead.
+ * Debug mode: off
+Traceback (most recent call last):
+  File "/root/video-behavior-analysis/superset-env/bin/superset", line 8, in <module>
+    sys.exit(superset())
+  File "/root/video-behavior-analysis/superset-env/lib/python3.6/site-packages/click/core.py", line 829, in __call__
+    return self.main(*args, **kwargs)
+  File "/root/video-behavior-analysis/superset-env/lib/python3.6/site-packages/flask/cli.py", line 586, in main
+    return super(FlaskGroup, self).main(*args, **kwargs)
+  File "/root/video-behavior-analysis/superset-env/lib/python3.6/site-packages/click/core.py", line 782, in main
+    rv = self.invoke(ctx)
+  File "/root/video-behavior-analysis/superset-env/lib/python3.6/site-packages/click/core.py", line 1259, in invoke
+    return _process_result(sub_ctx.command.invoke(sub_ctx))
+  File "/root/video-behavior-analysis/superset-env/lib/python3.6/site-packages/click/core.py", line 1066, in invoke
+    return ctx.invoke(self.callback, **ctx.params)
+  File "/root/video-behavior-analysis/superset-env/lib/python3.6/site-packages/click/core.py", line 610, in invoke
+    return callback(*args, **kwargs)
+  File "/root/video-behavior-analysis/superset-env/lib/python3.6/site-packages/click/decorators.py", line 73, in new_func
+    return ctx.invoke(f, obj, *args, **kwargs)
+  File "/root/video-behavior-analysis/superset-env/lib/python3.6/site-packages/click/core.py", line 610, in invoke
+    return callback(*args, **kwargs)
+  File "/root/video-behavior-analysis/superset-env/lib/python3.6/site-packages/flask/cli.py", line 860, in run_command
+    extra_files=extra_files,
+  File "/root/video-behavior-analysis/superset-env/lib/python3.6/site-packages/werkzeug/serving.py", line 1052, in run_simple
+    inner()
+  File "/root/video-behavior-analysis/superset-env/lib/python3.6/site-packages/werkzeug/serving.py", line 1005, in inner
+    fd=fd,
+  File "/root/video-behavior-analysis/superset-env/lib/python3.6/site-packages/werkzeug/serving.py", line 848, in make_server
+    host, port, app, request_handler, passthrough_errors, ssl_context, fd=fd
+  File "/root/video-behavior-analysis/superset-env/lib/python3.6/site-packages/werkzeug/serving.py", line 740, in __init__
+    HTTPServer.__init__(self, server_address, handler)
+  File "/usr/local/python3/lib/python3.6/socketserver.py", line 453, in __init__
+    self.server_bind()
+  File "/usr/local/python3/lib/python3.6/http/server.py", line 136, in server_bind
+    socketserver.TCPServer.server_bind(self)
+  File "/usr/local/python3/lib/python3.6/socketserver.py", line 467, in server_bind
+    self.socket.bind(self.server_address)
+OSError: [Errno 98] Address already in use
